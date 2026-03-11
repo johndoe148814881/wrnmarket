@@ -3,25 +3,41 @@
 #include <stdlib.h>
 #include <string.h>
 
-int q(int, char**);
-int dep(int, char**);
-int wit(int, char**);
+// local func defs
+static void showwin(char*);
+static int q(int, char**);
+static int dep(int, char**);
+static int wit(int, char**);
 
-void* (*tuiinit())(void*) {
+// global funcs
+void tuicmds() {
 	cmdnew("q", q);
 	cmdnew("dep", dep);
-	cmdnew("wit", wit);
+	cmdnew("wit", wit);}
 
-	return tui;}
+// local funcs
+static void showwin(char* winname) {
+	if (strcmp(winname, "main") == 0) {
+		int walletw = 50;
+		int walleth = 50;
+		int graphsw = 50;
 
-int q(int argc, char** argv) {
+		boxdraw(1, 1, walleth, walletw, FORE1, "", 1, 1, (char*[]){"deposit"});
+		boxdraw(1, 1 + walletw, walleth, width - walletw - graphsw, FORE1, "simulation", 1, 1, (char*[]){"new"});
+		boxdraw(1 + walleth, 1, height - walleth, width - graphsw, FORE1, "market", 1, 0, 0);
+		boxdraw(1, width - graphsw, height, graphsw, FORE1, "graphs", 1, 0, 0);}
+	else if (strcmp(winname, "newsim") == 0) {
+		}}
+
+static int q(int argc, char** argv) {
+	(void)argv;
 	if (argc != 1)
 		return CMDINVALIDARGC;
-
+	
 	running = 0;
 	return CMDSUCCESS;}
 
-int dep(int argc, char** argv) {
+static int dep(int argc, char** argv) {
 	if (argc != 2) {
 		return CMDINVALIDARGC;}
 	
@@ -34,7 +50,7 @@ int dep(int argc, char** argv) {
 	else 
 		return CMDINVALIDARGV;}
 
-int wit(int argc, char** argv) {
+static int wit(int argc, char** argv) {
 	if (argc != 2) 
 		return CMDINVALIDARGC;
 	
