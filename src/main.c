@@ -16,10 +16,17 @@ int main(int argc, char** argv) {
 
 	liquidvolume = fracnew(0, 1);
 
-	// join threads
+	// create threads
 	pthread_t tuithread;
-	pthread_create(&tuithread, NULL, tuiinit(), &running);
-	pthread_join(tuithread, NULL);
+	pthread_create(&tuithread, 0, tuiinit(&running), 0);
+	
+	// tui related
+	tuicreatecmds();
+	tuicreatebinds();
+	tuicreatehome();
+
+	// join threads
+	pthread_join(tuithread, 0);
 
 	return 0;}
 
