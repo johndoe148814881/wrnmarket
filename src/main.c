@@ -5,16 +5,47 @@
 #include <string.h>
 #include <pthread.h>
 
+// global vars
 int running = 1;
 int simulationloaded = 0;
-frac_t liquidvolume;
 
+frac_t walletvolume;
+
+frac_t liquidvolume;
+frac_t activevolume;
+frac_t liquidity;
+int openmarketsthreshold = DEFAULTOPENMARKETSTHRESHOLD;
+int probabilityalgorithm = DEFAULTPROBABILITYALGORITHM;
+frac_t probabilitythreshold;
+frac_t winvolume;
+frac_t lossvolume;
+frac_t profitvolume;
+int wins = 0;
+int losses = 0;
+frac_t winratio;
+int registeredmarkets = 0;
+int activemarkets = 0;
+int openmarkets = 0;
+int closedmarkets = 0;
+
+// local func defs
 int parseargs(int, char**);
 
+// main
 int main(int argc, char** argv) {
 	parseargs(argc, argv);
-
+	
+	// initialize frac_t type global vars
+	walletvolume = fracnew(0, 1);
+	
 	liquidvolume = fracnew(0, 1);
+	activevolume = fracnew(0, 1);
+	liquidity = fracnew(0, 1);
+	probabilitythreshold = DEFAULTPROBABILITYTHRESHOLD;
+	winvolume = fracnew(0, 1);
+	lossvolume = fracnew(0, 1);
+	profitvolume = fracnew(0, 1);
+	winratio = fracnew(0, 1);
 
 	// create threads
 	pthread_t tuithread;
@@ -22,7 +53,6 @@ int main(int argc, char** argv) {
 	
 	// tui related
 	tuicreatecmds();
-	tuicreatebinds();
 	tuicreatehome();
 
 	// join threads
@@ -30,6 +60,7 @@ int main(int argc, char** argv) {
 
 	return 0;}
 
+// local funcs
 int parseargs(int argc, char** argv) {
 	// parse args
 //	for (int i = 1; i < argc; ++i)

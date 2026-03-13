@@ -1,0 +1,16 @@
+# macros
+exe="wrnmarket"
+wrnmarket="/home/wrn/projs/wrnmarket"
+wrntui="/home/wrn/projs/wrntui"
+wrnfrac="/home/wrn/projs/wrnfrac"
+
+# clean
+cleaned=0
+for del in $exe obj; do
+    if [ -e $del ]; then
+        [ $cleaned -eq 0 ] && echo "cleaning" && cleaned=1
+	echo "    clean $del"
+        rm -rf $del
+    fi
+done
+

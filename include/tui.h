@@ -6,7 +6,6 @@ extern void* (*tuiinit(int*))(void*);
 
 // derived from wrnmarket/src/tui.h
 extern void tuicreatecmds();
-extern void tuicreatebinds();
 extern void tuicreatehome();
 
 #endif

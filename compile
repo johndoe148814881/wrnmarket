@@ -1,0 +1,44 @@
+# macros
+exe="wrnmarket"
+wrnmarket="/home/wrn/projs/wrnmarket"
+wrntui="/home/wrn/projs/wrntui"
+wrnfrac="/home/wrn/projs/wrnfrac"
+
+# clean
+cleaned=0
+for del in $exe obj; do
+    if [ -e $del ]; then
+        [ $cleaned -eq 0 ] && echo "cleaning" && cleaned=1
+	echo "    clean $del"
+        rm -rf $del
+    fi
+done
+
+# compile
+echo "compiling"
+mkdir -p obj
+for src in $wrnmarket/src/*.c $wrntui/src/*.c $wrnfrac/src/*.c; do
+    obj=obj/$(basename $(dirname $(dirname $src)))_$(basename $src .c).o
+    echo "    compile $src -> $obj"
+    gcc -std=gnu99 -Wall -Wextra -Werror -Wpedantic -g -O2 -D_POSIX_C_SOURCE=200809L -c $src -o $obj || exit 1
+done
+
+# link
+echo "linking"
+for obj in obj/*.o; do
+    echo "    link $obj -> $exe"
+done
+gcc obj/*.o -o $exe -lpthread -lm || exit 1
+
+# execute
+echo "executing"
+echo "    execute $exe"
+./$exe
+
+# clean
+#echo "cleaning"
+#for del in $exe obj; do
+#    echo "    clean $del"
+#    rm -rf $del
+#done
+
