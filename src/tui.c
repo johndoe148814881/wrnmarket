@@ -137,7 +137,8 @@ static int wit(int argc, char** argv) {
 	if (strcmp(argv[1], "all") == 0) {
 		frac_t set = fracnew(0, 1);
 		fracset(&liquidvolume, &set);
-		return 0;}
+		showwin("main");
+		return CMDSUCCESS;}
 			
 	char* check;
 	frac_t amount = fracnew(strtol(argv[1], &check, 10), 1);
