@@ -87,7 +87,7 @@ static void delallboxes() {
 	boxc = 0;}
 
 static int updatebox(box_t* box) {
-	int changed = box->optc == box->ooptc;
+	int changed = box->drawn && box->optc == box->ooptc;
 	
 	box->ooptc = box->optc;
 

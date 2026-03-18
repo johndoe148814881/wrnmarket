@@ -6,21 +6,22 @@
 // local type defs
 typedef struct {
 	char* name;
-	void (*onshow)(void);} win_t;
+	void (*onshow)(void);
+	void (*onupdate)(void);} win_t;
 
 // local vars
 static win_t* winv = 0; static int winc = 0;
 static char* currentwin = 0;
 
 // local func defs
-static void newwin(char*, void (*)(void));
+static void newwin(char*, void (*)(void), void (*)(void));
 static void delallwins();
 static int showwin(char*); 
 
 // global funcs
-void winnew(char* name, void (*onshow)(void)) {
+void winnew(char* name, void (*onshow)(void), void (*onupdate)(void)) {
 	pthread_mutex_lock(&tuiwinmutex);
-	newwin(name, onshow);
+	newwin(name, onshow, onupdate);
 	pthread_mutex_unlock(&tuiwinmutex);}
 
 int winshow(char* name) {
@@ -35,23 +36,25 @@ void winfreeall() {
 	pthread_mutex_unlock(&tuiwinmutex);}
 
 // local funcs
-static void newwin(char* name, void (*onshow)(void)) {
+static void newwin(char* name, void (*onshow)(void), void (*onupdate)(void)) {
 	winv = realloc(winv, sizeof(win_t) * ++winc);
 	
 	if (!winv)
 		abort();
 
-	winv[winc - 1] = (win_t){name, onshow};}
+	winv[winc - 1] = (win_t){name, onshow, onupdate};}
 
 static void delallwins() {
 	free(winv);}
 
 static int showwin(char* name) {
-	if (currentwin && strcmp(currentwin, name) == 0)
-		return 0;
-
 	for (int i = 0; i < winc; ++i)
-		if (strcmp(winv[i].name, name) == 0) {
+		if (strcmp(winv[i].name, name) == 0) {		
+			if (strcmp(winv[i].name, currentwin)) {
+				if (winv[i].onupdate)
+					winv[i].onupdate();
+				return 0;}
+			
 			boxfreeall();
 			bindfreeall();
 			infofreeall();

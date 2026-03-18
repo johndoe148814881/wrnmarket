@@ -12,19 +12,24 @@ static void mainn();
 static void newsimc();
 static void newsimn();
 static void mainwin();
+static void mainwinupdate();
 static void newsimwin();
 static void depwin();
 static void witwin();
+
+// local vars
+static int maindcreated = 0;
+static int mainwcreated = 0;
 
 // global funcs
 void tuicreate() {
 	cmdprefix = '/';
 	cmdnew("dep", dep);
 	cmdnew("wit", wit);
-	winnew("main", mainwin);
-	winnew("newsim", newsimwin);
-	winnew("dep", depwin);
-	winnew("wit", witwin);}
+	winnew("main", mainwin, mainwinupdate);
+	winnew("newsim", newsimwin, 0);
+	winnew("dep", depwin, 0);
+	winnew("wit", witwin, 0);}
 
 // local funcs
 static void mainwin() {
@@ -40,10 +45,13 @@ static void mainwin() {
 	boxnew(1 + walleth, 1, tuiheight - walleth - 2, tuiwidth - graphsw, tuiforev[2], "markets");
 	boxnew(1, 1 + tuiwidth - graphsw, tuiheight - 2, graphsw, tuiforev[3], "graphs");
 	
+	maindcreated = 0;
+	mainwcreated = 0;
+
 	boxbindnew("simulation", "new", mainn);
-	if (fraccmp(&walletvolume, &(frac_t){0, 1}) > 0)
+	if ((maindcreated = fraccmp(&walletvolume, &(frac_t){0, 1}) > 0))
 		boxbindnew("wallet", "deposit", maind);
-	if (fraccmp(&liquidvolume, &(frac_t){0, 1}) > 0)
+	if ((mainwcreated = fraccmp(&liquidvolume, &(frac_t){0, 1}) > 0))
 		boxbindnew("wallet", "withdraw", mainw);
 
 	infonew(2, 3, infowidth, tuiforev[0], "volume", &walletvolume, INFOFRAC);
@@ -72,6 +80,12 @@ static void mainwin() {
 	listaddfield(infowidth, tuiforev[2], "INFOFRAC", INFOFRAC);
 	listaddrecord((void*[]){&openmarketsthreshold, &liquidvolume});
 	listaddrecord((void*[]){&registeredmarkets, &activevolume});}
+
+static void mainwinupdate() {
+	if (!maindcreated && (maindcreated = fraccmp(&walletvolume, &(frac_t){0, 1}) > 0))
+		boxbindnew("wallet", "deposit", maind);
+	if (!mainwcreated && (mainwcreated = fraccmp(&liquidvolume, &(frac_t){0, 1}) > 0))
+		boxbindnew("wallet", "withdraw", mainw);}
 
 static void newsimwin() {
 	int newsimw = 50;
