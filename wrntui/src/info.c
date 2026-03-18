@@ -1,0 +1,125 @@
+#include "../include/info.h"
+#include "../include/tui.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+// local type defs
+typedef struct {
+	int row;
+	int col;
+	int cols;
+	int type;
+	char* clr;
+	char* name;
+	char* odraw;
+	void* value;
+	void* ovalue;} info_t;
+
+// local vars
+static info_t* infov = 0; static int infoc = 0;
+
+// local func defs
+static void newinfo(int, int, int, char*, char*, void*, int);
+static void delallinfos();
+static int updateinfo(info_t*);
+static void drawinfo(info_t*);
+
+// global funcs
+void infonew(int row, int col, int cols, char* clr, char* name, void* value, int type) {
+	pthread_mutex_lock(&tuiflushmutex);
+	newinfo(row, col, cols, clr, name, value, type);
+	pthread_mutex_unlock(&tuiflushmutex);}
+
+void infodrawall() {
+	pthread_mutex_lock(&tuiflushmutex);
+	for (int i = 0; i < infoc; ++i)
+		if (!updateinfo(&infov[i]))
+			drawinfo(&infov[i]);
+	pthread_mutex_unlock(&tuiflushmutex);}
+
+void infofreeall() {
+	pthread_mutex_lock(&tuiflushmutex);
+	delallinfos();
+	pthread_mutex_unlock(&tuiflushmutex);}
+
+// local funcs
+static void newinfo(int row, int col, int cols, char* clr, char* name, void* value, int type) {
+	char* odraw = malloc(cols + 1);
+	infov = realloc(infov, ++infoc * sizeof(info_t));
+	
+	if (!odraw || !infov) 
+		abort();
+	
+	void* ovalue;
+	switch (type) {
+	case INFOINT: {
+		int* ointvalue = malloc(sizeof(int));
+		if (!ointvalue)
+			abort();
+		*ointvalue = 0;
+		ovalue = (void*)ointvalue;
+		break;}
+	case INFOFRAC: {
+		frac_t* ofracvalue = malloc(sizeof(frac_t));
+		if (!ofracvalue)
+			abort();
+		*ofracvalue = fracnew(0, 1);
+		ovalue = (void*)ofracvalue;
+		break;}
+	default:
+		abort();}
+
+	memset(odraw, 0, cols + 1);
+	infov[infoc - 1] = (info_t){row, col, cols, type, clr, name, odraw, value, ovalue};} 
+
+static void delallinfos() {
+	for (int i = 0; i < infoc; ++i) {
+		free(infov[i].odraw);
+		free(infov[i].ovalue);}
+	free(infov);
+	infov = 0;
+	infoc = 0;}
+
+static int updateinfo(info_t* info) {
+	int len;
+	switch (info->type) {
+	case INFOINT:
+		if (*(int*)info->value == *(int*)info->ovalue && *info->odraw != 0)
+			return 1;
+		*(int*)info->ovalue = *(int*)info->value;
+		len = snprintf(info->odraw, info->cols, "%s: %d", info->name, *(int*)info->value);
+		break;
+	case INFOFRAC:
+		if (fraccmp((frac_t*)info->value, (frac_t*)info->ovalue) == 0 && *info->odraw != 0)
+			return 1;
+		*(frac_t*)info->ovalue = *(frac_t*)info->value;
+		len = snprintf(info->odraw, info->cols, "%s: %.17g", info->name, fractod((frac_t*)info->value));
+		break;
+	default:
+		return 1;}
+
+	len = len < 0 ? 0 : len;
+	len = len >= info->cols ? info->cols - 1 : len;
+	memset(info->odraw + len, ' ', info->cols - 1 - len);
+
+	return 0;}
+	
+static void drawinfo(info_t* info) {
+	int namelen = (int)strlen(info->name) + 2;
+	namelen = namelen >= info->cols ? info->cols : namelen;
+
+	if (namelen != info->cols)
+		printf("%s%.*s%s%s%s%s", 
+			MOVECURS(info->row, info->col), 
+			namelen, info->odraw, 
+			info->clr, 
+			BOLD, 
+			info->odraw + namelen, 
+			CLRATTRS);
+	else 
+		printf("%s%.*s%s", 
+			MOVECURS(info->row, info->col), 
+			namelen, info->odraw,   
+			CLRATTRS);}
+
