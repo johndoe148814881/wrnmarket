@@ -17,12 +17,22 @@ void bindnew(int key, void (*func)(void)) {
 	bindv[bindc - 1] = (bind_t){key, func};}
 
 void bindexecute(int key) {
+	void (**funcs)(void) = 0;
+	int funcc = 0;
+
 	for (int i = 0; i < bindc; ++i)
-		if (key == bindv[i].key)
-			bindv[i].func();}
+		if (key == bindv[i].key) {
+			funcs = realloc(funcs, sizeof(void (*)(void)) * ++funcc);
+			if (!funcs)
+				abort();
+			funcs[funcc - 1] = bindv[i].func;}
+
+	for (int i = 0; i < funcc; ++i)
+		funcs[i]();
+
+	free(funcs);}
 
 void bindfreeall() {
 	free(bindv);
 	bindv = 0;
 	bindc = 0;}
-
