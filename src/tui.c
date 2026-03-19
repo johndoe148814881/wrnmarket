@@ -84,8 +84,13 @@ static void mainwin() {
 static void mainwinupdate() {
 	if (!maindcreated && (maindcreated = fraccmp(&walletvolume, &(frac_t){0, 1}) > 0))
 		boxbindnew("wallet", "deposit", maind);
+	else if (maindcreated && !(maindcreated = fraccmp(&walletvolume, &(frac_t){0, 1}) > 0))
+		boxbindfree("wallet", "deposit", maind);
+
 	if (!mainwcreated && (mainwcreated = fraccmp(&liquidvolume, &(frac_t){0, 1}) > 0))
-		boxbindnew("wallet", "withdraw", mainw);}
+		boxbindnew("wallet", "withdraw", mainw);
+	else if (mainwcreated && !(maindcreated = fraccmp(&walletvolume, &(frac_t){0, 1}) > 0))
+		boxbindfree("wallet", "withdraw", mainw);}
 
 static void newsimwin() {
 	int newsimw = 50;
@@ -137,7 +142,7 @@ static int dep(int argc, char** argv) {
 	char* check;
 	frac_t amount = fracnew(strtol(argv[1], &check, 10), 1);
 						
-	if (*check == '\0' && amount.num > 0) {
+	if (*check == 0 && fractod(&amount) > 0) {
 		fracadd(&liquidvolume, &amount);
 		winshow("main");
 		return CMDSUCCESS;}
@@ -153,15 +158,16 @@ static int wit(int argc, char** argv) {
 		return CMDINVALIDARGC;
 	
 	if (strcmp(argv[1], "all") == 0) {
-		frac_t set = fracnew(0, 1);
+		frac_t set = fracnew(0, 0);
 		fracset(&liquidvolume, &set);
 		winshow("main");
 		return CMDSUCCESS;}
 			
 	char* check;
 	frac_t amount = fracnew(strtol(argv[1], &check, 10), 1);
+	amount = fraccmp(&amount, &liquidvolume) > 0 ? liquidvolume : amount; 
 				
-	if (*check == '\0' && amount.num > 0) {
+	if (*check == 0 && fractod(&amount) > 0) {
 		fracsub(&liquidvolume, &amount);
 		winshow("main");
 		return CMDSUCCESS;}

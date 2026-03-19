@@ -78,7 +78,8 @@ static void delmsg(msg_t* msg) {
 
 		return;}
 	free(msgv);
-	msgv = 0;}
+	msgv = 0;
+	msgc = 0;}
 
 static void delallmsgs() {
 	for (int i = 0; i < msgc; ++i) 

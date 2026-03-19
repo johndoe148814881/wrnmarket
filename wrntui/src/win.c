@@ -50,7 +50,7 @@ static void delallwins() {
 static int showwin(char* name) {
 	for (int i = 0; i < winc; ++i)
 		if (strcmp(winv[i].name, name) == 0) {		
-			if (strcmp(winv[i].name, currentwin)) {
+			if (currentwin && strcmp(name, currentwin) == 0) {
 				if (winv[i].onupdate)
 					winv[i].onupdate();
 				return 0;}

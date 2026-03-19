@@ -3,6 +3,7 @@
 
 extern void bindnew(int character, void (*function)(void));
 extern void bindexecute(int character);
+extern void bindfree(int character, void (*function)(void));
 extern void bindfreeall();
 
 #endif

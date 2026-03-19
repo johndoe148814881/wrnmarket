@@ -23,6 +23,7 @@ static box_t* boxv = 0; static int boxc = 0;
 // local func defs
 static void newbox(int, int, int, int, char*, char*);
 static void newbind(char*, char*, void (*)(void));
+static void delbind(char*, char*, void (*)(void));
 static void delallboxes();
 static int updatebox(box_t*);
 static void drawbox(box_t*);
@@ -36,6 +37,11 @@ void boxnew(int row, int col, int rows, int cols, char* clr, char* title) {
 void boxbindnew(char* title, char* name, void (*func)(void)) {
 	pthread_mutex_lock(&tuiflushmutex);
 	newbind(title, name, func);
+	pthread_mutex_unlock(&tuiflushmutex);}
+
+void boxbindfree(char* title, char* name, void (*func)(void)) {
+	pthread_mutex_lock(&tuiflushmutex);
+	delbind(title, name, func);
 	pthread_mutex_unlock(&tuiflushmutex);}
 
 void boxdrawall() {
@@ -74,6 +80,11 @@ static void newbind(char* title, char* name, void (*func)(void)) {
 				abort();
 
 			strcpy(boxv[i].optv[boxv[i].optc - 1], name);}}
+
+static void delbind(char* title, char* name, void (*func)(void)){
+	for (int i = 0; i < boxc; ++i)
+		if (strcmp(boxv[i].title, title) == 0)
+			bindfree(*name, func);}
 
 static void delallboxes() {
 	for (int i = 0; i < boxc; ++i) {
