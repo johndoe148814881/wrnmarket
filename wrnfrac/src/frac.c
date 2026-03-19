@@ -10,9 +10,16 @@
 	return a;}
 
 /* author: claude */ void fracreduce(frac_t* f) {
+	if (f->den == 0) {
+		f->num = 0;
+		f->den = 1;
+		return;}
+
 	if (f->den < 0) {
 		f->num = -f->num; f->den = -f->den;}
 	int g = gcd(llabs(f->num), llabs(f->den));
+	if (g == 0)
+		g = 1;
 	f->num /= g;
 	f->den /= g;}
 
@@ -44,9 +51,10 @@ void fracset(frac_t* a, frac_t* b) {
 	fracreduce(a);}
 
 /* author: claude */ double fractod(frac_t* a) {
+	if (a->den == 0)
+		return 0.0;
 	return (double)a->num / a->den;}
 
 /* author: claude */ frac_t dtofrac(double x) {
 	static int precision = 1000000;
 	return fracnew((int)round(x * precision), precision);}
-
