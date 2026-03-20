@@ -6,7 +6,6 @@
 
 // local type defs
 typedef struct {
-	int id;
 	void** valuev;
 	void** ovaluev;
 	char** valueodraws;} record_t;
@@ -24,16 +23,21 @@ typedef struct {
 	int cols;
 	int recordc;
 	int fieldc;
+	int drawtitles;
+	record_t* selrecord;
+	record_t* oselrecord;
 	record_t** recordv;
 	field_t** fieldv;
-	char** fieldodraws;} list_t;
+	char** fieldodraws;
+	void (*enterfunc)(int, void**);
+	void (*leftfunc)(int, void**);
+	void (*rightfunc)(int, void**);} list_t;
 
 // local vars
-static int lastid = 0;
 static list_t list = {0};
 
 // local func defs
-static void resetlist(int, int, int, int);
+static void resetlist(int, int, int, int, int);
 static void addfield(int, char*, char*, int);
 static void addrecord(void**);
 static void delrecord(record_t*);
@@ -41,9 +45,9 @@ static int updatelist();
 static void drawlist();
 
 // global funcs
-void listnew(int row, int col, int rows, int cols) {
+void listnew(int row, int col, int rows, int cols, int drawtitles) {
 	pthread_mutex_lock(&tuiflushmutex);
-	resetlist(row, col, rows, cols);
+	resetlist(row, col, rows, cols, drawtitles);
 	pthread_mutex_unlock(&tuiflushmutex);}
 
 void listaddfield(int cols, char* clr, char* name, int typeid) {
@@ -67,19 +71,66 @@ void listdelrecord(void* firstvalue) {
 		delrecord(record);
 		pthread_mutex_unlock(&tuiflushmutex);}}
 
+void listbindenter(void (*func)(int, void**)) {
+	list.enterfunc = func;}
+
+void listbindleft(void (*func)(int, void**)) {
+	list.leftfunc = func;}
+
+void listbindright(void (*func)(int, void**)) {
+	list.rightfunc = func;}
+
 void listdraw() {
 	pthread_mutex_lock(&tuiflushmutex);
 	if (!updatelist())
 		drawlist();
 	pthread_mutex_unlock(&tuiflushmutex);}
 
+void listprocessenter() {
+	if (list.selrecord && list.enterfunc)
+		list.enterfunc(list.recordc, list.selrecord->valuev);}
+
+void listprocessup() { 
+	if (!list.selrecord)
+		list.selrecord = list.recordv[list.recordc - 1];
+	else if (list.selrecord == list.recordv[0])
+		list.selrecord = 0;
+	else {
+		int selrecordi = 0;
+		for (; selrecordi < list.recordc; ++selrecordi)
+			if (list.recordv[selrecordi] == list.selrecord)
+				break;
+
+		list.selrecord = list.recordv[selrecordi - 1];}}
+
+void listprocessdown() { 
+	if (!list.selrecord)
+		list.selrecord = list.recordv[0];
+	else if (list.selrecord == list.recordv[list.recordc - 1])
+		list.selrecord = 0;
+	else {
+		int selrecordi = 0;
+		for (; selrecordi < list.recordc; ++selrecordi)
+			if (list.recordv[selrecordi] == list.selrecord)
+				break;
+		
+		list.selrecord = list.recordv[selrecordi + 1];}}
+
+void listprocessleft() {
+	if (list.selrecord && list.leftfunc)
+		list.leftfunc(list.recordc, list.selrecord->valuev);}
+
+void listprocessright() {
+	if (list.selrecord && list.rightfunc)
+		list.rightfunc(list.recordc, list.selrecord->valuev);}
+
 void listfree() {
 	pthread_mutex_lock(&tuiflushmutex);
-	resetlist(0, 0, 0, 0);
+	resetlist(0, 0, 0, 0, 0);
 	pthread_mutex_unlock(&tuiflushmutex);}
 
 // local funcs
-static void resetlist(int row, int col, int rows, int cols) {
+static void resetlist(int row, int col, int rows, int cols, int drawtitles) {
 	// free fieldv and fieldodraws
 	for (int i = 0; i < list.fieldc; ++i) {
 		free(list.fieldv[i]);
@@ -106,7 +157,13 @@ static void resetlist(int row, int col, int rows, int cols) {
 	list.rows = rows;
 	list.cols = cols;
 	list.fieldc = 0;
-	list.recordc = 0;}
+	list.recordc = 0;
+	list.selrecord = 0;
+	list.oselrecord = 0;
+	list.enterfunc = 0;
+	list.leftfunc = 0;
+	list.rightfunc = 0;
+	list.drawtitles = drawtitles;}
 
 static void addfield(int cols, char* clr, char* name, int typeid) {
 	// allocate memory
@@ -182,12 +239,12 @@ static void addrecord(void** values) {
 		
 		// validate allocated children memory
 		if (!record->ovaluev[i] || !record->valueodraws[i]) 
-			abort();}
+			abort();}}
 	
-	// set record stack values
-	record->id = ++lastid;}
-
 static void delrecord(record_t* record) {
+	if (list.selrecord == record)
+		list.selrecord = 0;
+
 	// bring following records down one place in recordv
 	int recordi = -1;
 	for (int i = 0; i < list.recordc; ++i) { 
@@ -271,6 +328,11 @@ static int updatelist() {
 		for (int i = 0; i < list.fieldc; ++i) {
 			snprintf(list.fieldodraws[i], list.fieldv[i]->cols, "%s", list.fieldv[i]->name);
 			updated = 0;}
+	
+	// update selrecord
+	if (list.selrecord != list.oselrecord) {
+		list.oselrecord = list.selrecord;
+		updated = 0;}
 
 	return updated;}
 
@@ -282,7 +344,7 @@ static void drawlist() {
 		record_t* record = list.recordv[i];
 	
 		// draw formatted list fieldodraws as field titles
-		if (i == 0) {
+		if (i == 0 && list.drawtitles) {
 			char* fielddraw = malloc(field->cols + 1);
 			int len = sprintf(fielddraw, "%.*s", field->cols, list.fieldodraws[ii]);
 			memset(fielddraw + len, 0, field->cols - len + 1);
@@ -300,8 +362,20 @@ static void drawlist() {
 		int len = sprintf(valuedraw, "%.*s", field->cols, record->valueodraws[ii]);
 		memset(valuedraw + len, ' ', field->cols - len);
 		valuedraw[field->cols] = 0;
+		
+		if (record != list.selrecord)
+			printf("%s%s%s%s", MOVECURS(list.row + list.drawtitles + i, list.col + coloffset), field->clr, valuedraw, CLRATTRS);
+		else {
+			int clri = -1;
+			for (int i = 0; i < TUIFOREC; ++i)
+				if (tuiforev[i] == field->clr) {
+					clri = i;
+					break;}
 
-		printf("%s%s%s%s", MOVECURS(list.row + 1 + i, list.col + coloffset), field->clr, valuedraw, CLRATTRS);
+			if (clri == -1)
+				abort();
+
+			printf("%s%s%s%s%s", MOVECURS(list.row + list.drawtitles + i, list.col + coloffset), tuibackv[clri], tuiforebla, valuedraw, CLRATTRS);}
+
 		free(valuedraw);
-
 		coloffset += field->cols;}}}

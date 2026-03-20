@@ -3,12 +3,19 @@
 #define LISTINT 0
 #define LISTFRAC 1
 
-extern void listnew(int row, int column, int rows, int columns);
+extern void listnew(int row, int column, int rows, int columns, int drawtitles);
 extern void listaddfield(int cols, char* colour, char* name, int typeidentifier);
 extern void listaddrecord(void** values);
 extern void listdelrecord(void* firstvalue);
-extern void listbindselect(void (*func)(int valuec, void** recordvaluev));
+extern void listbindselect(void (*func)(int recordvaluec, void** recordvaluev));
+extern void listbindleft(void (*func)(int recordvaluec, void** recordvaluev));
+extern void listbindright(void (*func)(int recordvaluec, void** recordvaluev));
 extern void listdraw();
+extern void listprocessenter();
+extern void listprocessup();
+extern void listprocessdown();
+extern void listprocessleft();
+extern void listprocessright();
 extern void listfree();
 
 #endif

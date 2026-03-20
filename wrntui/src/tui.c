@@ -13,9 +13,15 @@
 
 // global vars
 char* tuiforev[TUIFOREC] = {0}; 
+char* tuibackv[TUIBACKC] = {0};
 char* tuiforewhi = 0;
+char* tuiforebla = 0;
 char* tuiforeerr = 0;
 char* tuiforesuc = 0;
+char* tuibackwhi = 0;
+char* tuibackbla = 0;
+char* tuibackerr = 0;
+char* tuibacksuc = 0;
 char* MOVECURS(int row, int col) {
 	static char rstrs[16][64];
 	static int rstri;
@@ -104,6 +110,8 @@ static void initin() {
 	tcgetattr(STDIN_FILENO, &oldtermattrs);
 	newtermattrs = oldtermattrs;
 	newtermattrs.c_lflag &= ~(ICANON | ECHO);
+	newtermattrs.c_cc[VMIN] = 1;
+	newtermattrs.c_cc[VTIME] = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &newtermattrs);
 	
 	int flags = fcntl(STDIN_FILENO, F_GETFL, 0); // disable stdin funcs yeilding
@@ -121,6 +129,11 @@ static void initout() {
 		tuiforev[2] = FORE324BIT;
 		tuiforev[3] = FORE424BIT;
 		tuiforev[4] = FORE524BIT;
+		tuibackv[0] = BACK124BIT;
+		tuibackv[1] = BACK224BIT;
+		tuibackv[2] = BACK324BIT;
+		tuibackv[3] = BACK424BIT;
+		tuibackv[4] = BACK524BIT;
 		tuiforeerr = FOREERR24BIT;
 		tuiforesuc = FORESUC24BIT;}
 	else {
@@ -129,9 +142,17 @@ static void initout() {
 		tuiforev[2] = FOREWHITTY;
 		tuiforev[3] = FOREWHITTY;
 		tuiforev[4] = FOREWHITTY;
+		tuibackv[0] = BACKWHITTY;
+		tuibackv[1] = BACKWHITTY;
+		tuibackv[2] = BACKWHITTY;
+		tuibackv[3] = BACKWHITTY;
+		tuibackv[4] = BACKWHITTY;
 		tuiforeerr = FOREERRTTY;
 		tuiforesuc = FORESUCTTY;}
 	tuiforewhi = FOREWHITTY;
+	tuiforebla = FOREBLATTY;
+	tuibackwhi = BACKWHITTY;
+	tuibackbla = BACKBLATTY;
 
 	struct winsize w; // get width and height of terminal/tty
 	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_row == 0 || w.ws_col == 0) 
@@ -157,6 +178,22 @@ static void initout() {
 static void iterin() {
 	for (int ch; !istyping && (ch = getchar()) != EOF;) {
 		switch (ch) { // any other input
+		case '\n': // if enter pressed for lists
+			listprocessenter();
+			break;
+		case 27: // escape sequence begin
+			if (getchar() != '[')
+				 break;
+
+			if ((ch = getchar()) == 'A') // up arrow
+				listprocessup();
+			else if (ch == 'B') // down arrow
+				listprocessdown();
+			else if (ch == 'D') // left arrow
+				listprocessleft();
+			else if (ch == 'C') // right arrow
+				listprocessright();
+			break;
 		default:
 			if (ch == cmdprefix) { // cmd prefix entered, allow typing in cmdbuffer
 				istyping = 1;

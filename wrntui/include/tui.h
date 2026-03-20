@@ -14,6 +14,7 @@
 #define CMDINVALIDARGV -2
 #define CMDINVALIDARGC -3
 #define TUIFOREC 5
+#define TUIBACKC TUIFOREC
 
 // cursor
 #define HIDECURS "\033[?25l"
@@ -36,14 +37,32 @@ extern char* MOVECURS(int, int);
 #define FORE524BIT "\033[38;2;160;100;110m" 
 #define FOREERR24BIT "\033[38;2;163;74;74m"
 #define FORESUC24BIT "\033[38;2;92;158;100m"
+#define BACK124BIT "\033[48;2;72;120;140m"
+#define BACK224BIT "\033[48;2;130;105;155m"
+#define BACK324BIT "\033[48;2;180;140;80m"
+#define BACK424BIT "\033[48;2;90;150;120m"
+#define BACK524BIT "\033[48;2;160;100;110m" 
+#define BACKERR24BIT "\033[48;2;163;74;74m"
+#define BACKSUC24BIT "\033[48;2;92;158;100m"
 #define FOREWHITTY "\033[37m"
+#define FOREBLATTY "\033[30m"
 #define FOREERRTTY "\033[31m"
 #define FORESUCTTY "\033[32m" 
+#define BACKWHITTY "\033[47m"
+#define BACKBLATTY "\033[40m"
+#define BACKERRTTY "\033[41m"
+#define BACKSUCTTY "\033[42m" 
 // variable attributes influenced by terminal context
 extern char* tuiforev[TUIFOREC];
+extern char* tuibackv[TUIBACKC];
 extern char* tuiforewhi;
+extern char* tuiforebla;
 extern char* tuiforeerr;
 extern char* tuiforesuc;
+extern char* tuibackwhi;
+extern char* tuibackbla;
+extern char* tuibackerr;
+extern char* tuibacksuc;
 
 // global vars
 extern pthread_mutex_t tuiflushmutex;

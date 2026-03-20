@@ -4,28 +4,42 @@
 #include <string.h>
 
 // local func defs
-static int dep(int, char**);
-static int wit(int, char**);
+static int depcmd(int, char**);
+static int witcmd(int, char**);
+
+static void mainwin();
+static void mainwinupdate();
 static void maind();
 static void mainw();
 static void mainn();
+
+static void newsimwin();
 static void newsimc();
 static void newsimn();
-static void mainwin();
-static void mainwinupdate();
-static void newsimwin();
+
 static void depwin();
+static void depc();
+static void depd();
+static void depwinlistleft(int, void**);
+static void depwinlistright(int, void**);
+
 static void witwin();
+static void witc();
+static void witw();
 
 // local vars
 static int maindcreated = 0;
 static int mainwcreated = 0;
 
+static int depwinvolume = 0;
+
+static int witwinvolume = 0;
+
 // global funcs
 void tuicreate() {
 	cmdprefix = '/';
-	cmdnew("dep", dep);
-	cmdnew("wit", wit);
+	cmdnew("dep", depcmd);
+	cmdnew("wit", witcmd);
 	winnew("main", mainwin, mainwinupdate);
 	winnew("newsim", newsimwin, 0);
 	winnew("dep", depwin, 0);
@@ -75,9 +89,9 @@ static void mainwin() {
 	infonew(4, simulationc + 2 + infowidth * 2, infowidth, tuiforev[1], "open markets", &openmarkets, INFOINT);
 	infonew(5, simulationc + 2 + infowidth * 2, infowidth, tuiforev[1], "closed markets", &closedmarkets, INFOINT);
 
-	listnew(walleth + 2, 3, tuiheight - walleth - 4, tuiwidth - graphsw - 4);
-	listaddfield(infowidth, tuiforev[2], "INFOINT", INFOINT);
-	listaddfield(infowidth, tuiforev[2], "INFOFRAC", INFOFRAC);
+	listnew(walleth + 2, 3, tuiheight - walleth - 4, tuiwidth - graphsw - 4, 1);
+	listaddfield(infowidth, tuiforev[2], "int", INFOINT);
+	listaddfield(infowidth, tuiforev[2], "frac_t", INFOFRAC);
 	listaddrecord((void*[]){&openmarketsthreshold, &liquidvolume});
 	listaddrecord((void*[]){&registeredmarkets, &activevolume});}
 
@@ -93,28 +107,40 @@ static void mainwinupdate() {
 		boxbindfree("wallet", "withdraw", mainw);}
 
 static void newsimwin() {
-	int newsimw = 50;
-	int newsimh = 10;
+	int boxw = 50;
+	int boxh = 10;
 
-	boxnew(tuiheight / 2 - newsimh / 2 + 1, tuiwidth / 2 - newsimw / 2, newsimh, newsimw, tuiforev[4], "new simulation");
+	boxnew(tuiheight / 2 - boxh / 2 + 1, tuiwidth / 2 - boxw / 2, boxh, boxw, tuiforev[4], "new simulation");
 	boxbindnew("new simulation", "new", newsimn);
 	boxbindnew("new simulation", "cancel", newsimc);}
 
 static void depwin() {
-	int depw = 50;
-	int deph = 3;
+	depwinvolume = 10;
 
-	boxnew(tuiheight / 2 - deph / 2 + 1, tuiwidth / 2 - depw / 2, deph, depw, tuiforev[4], "deposit");
-	boxbindnew("deposit", "deposit", newsimn);
-	boxbindnew("deposit", "cancel", newsimc);}
+	int boxw = 50; int boxh = 3;
+	int boxx = tuiwidth / 2 - boxw / 2; int boxy = tuiheight / 2 - boxh / 2 + 1;
+
+	boxnew(boxy, boxx, boxh, boxw, tuiforev[4], "deposit");
+	boxbindnew("deposit", "deposit", depd);
+	boxbindnew("deposit", "cancel", depc);
+	
+	msgnew(boxy + 1, boxx + 2, 20, "volume: ");
+	
+	listnew(boxy + 1, boxx + 2 + 20, boxh - 2, boxw - 4 - 20, 0);
+	listaddfield(boxw - 4 - 20, tuiforev[4], "volume", INFOINT);
+	listaddrecord((void*[]){&depwinvolume});
+	listbindleft(depwinlistleft);
+	listbindright(depwinlistright);}
 
 static void witwin() {
-	int witw = 50;
-	int with = 3;
+	witwinvolume = 10;
+	
+	int boxw = 50;
+	int boxh = 3;
 
-	boxnew(tuiheight / 2 - with / 2 + 1, tuiwidth / 2 - witw / 2, with, witw, tuiforev[4], "withdraw");
-	boxbindnew("withdraw", "withdraw", newsimn);
-	boxbindnew("withdraw", "cancel", newsimc);}
+	boxnew(tuiheight / 2 - boxh / 2 + 1, tuiwidth / 2 - boxw / 2, boxh, boxw, tuiforev[4], "withdraw");
+	boxbindnew("withdraw", "withdraw", witw);
+	boxbindnew("withdraw", "cancel", witc);}
 
 static void maind() {
 	winshow("dep");}
@@ -131,7 +157,30 @@ static void newsimc() {
 static void newsimn() {
 	}
 
-static int dep(int argc, char** argv) {
+static void depc() {
+	winshow("main");}
+
+static void depd() {
+	frac_t new = fracnew(depwinvolume, 1);
+	fracadd(&liquidvolume, &new);
+	winshow("main");}
+
+static void witc() {
+	winshow("main");}
+
+static void witw() {
+	}
+
+static void depwinlistleft(int recordc, void** recordv) {
+	(void)recordc; (void)recordv;
+	depwinvolume -= 1;
+	depwinvolume = depwinvolume < 0 ? 0 : depwinvolume;}
+
+static void depwinlistright(int recordc, void** recordv) {
+	(void)recordc; (void)recordv;
+	depwinvolume += 1;}
+
+static int depcmd(int argc, char** argv) {
 	if (argc == 1) {
 		winshow("dep");
 		return CMDSUCCESS;}
@@ -149,7 +198,7 @@ static int dep(int argc, char** argv) {
 	else 
 		return CMDINVALIDARGV;}
 
-static int wit(int argc, char** argv) {
+static int witcmd(int argc, char** argv) {
 	if (argc == 1) {
 		winshow("wit");
 		return CMDSUCCESS;}

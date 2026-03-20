@@ -88,7 +88,7 @@ static void delbind(char* title, char* name, void (*func)(void)){
 			bindfree(*name, func);
 
 			int opti = -1;
-			for (int ii = 0; i < boxv[i].optc; ++ii) {
+			for (int ii = 0; ii < boxv[i].optc; ++ii) {
 				if (strcmp(boxv[i].optv[ii], name) == 0 && opti == -1)
 					opti = ii;
 				if (ii > opti && opti != -1)
