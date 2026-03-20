@@ -69,6 +69,7 @@ static void newbind(char* title, char* name, void (*func)(void)) {
 	for (int i = 0; i < boxc; ++i)
 		if (strcmp(boxv[i].title, title) == 0) {
 			bindnew(*name, func);
+			
 			boxv[i].optv = realloc(boxv[i].optv, ++boxv[i].optc * sizeof(char*));
 			
 			if (!boxv[i].optv)
@@ -83,8 +84,31 @@ static void newbind(char* title, char* name, void (*func)(void)) {
 
 static void delbind(char* title, char* name, void (*func)(void)){
 	for (int i = 0; i < boxc; ++i)
-		if (strcmp(boxv[i].title, title) == 0)
-			bindfree(*name, func);}
+		if (strcmp(boxv[i].title, title) == 0) {
+			bindfree(*name, func);
+
+			int opti = -1;
+			for (int ii = 0; i < boxv[i].optc; ++ii) {
+				if (strcmp(boxv[i].optv[ii], name) == 0 && opti == -1)
+					opti = ii;
+				if (ii > opti && opti != -1)
+					boxv[i].optv[ii - 1] = boxv[i].optv[ii];}
+
+			if (opti == -1)
+				abort();
+			
+			free(boxv[i].optv[opti]);
+			
+			if (boxv[i].optc > 1) {
+				boxv[i].optv = realloc(boxv[i].optv, --boxv[i].optc * sizeof(char*));
+
+				if (!boxv[i].optv)
+					abort();
+
+				return;}
+			free(boxv[i].optv);
+			boxv[i].optv = 0;
+			boxv[i].optc = 0;}}
 
 static void delallboxes() {
 	for (int i = 0; i < boxc; ++i) {

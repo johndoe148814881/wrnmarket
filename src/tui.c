@@ -89,7 +89,7 @@ static void mainwinupdate() {
 
 	if (!mainwcreated && (mainwcreated = fraccmp(&liquidvolume, &(frac_t){0, 1}) > 0))
 		boxbindnew("wallet", "withdraw", mainw);
-	else if (mainwcreated && !(maindcreated = fraccmp(&walletvolume, &(frac_t){0, 1}) > 0))
+	else if (mainwcreated && !(mainwcreated = fraccmp(&liquidvolume, &(frac_t){0, 1}) > 0))
 		boxbindfree("wallet", "withdraw", mainw);}
 
 static void newsimwin() {
