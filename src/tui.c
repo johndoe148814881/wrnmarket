@@ -26,6 +26,8 @@ static void depwinlistright(int, void**);
 static void witwin();
 static void witc();
 static void witw();
+static void witwinlistleft(int, void**);
+static void witwinlistright(int, void**);
 
 // local vars
 static int maindcreated = 0;
@@ -117,16 +119,16 @@ static void newsimwin() {
 static void depwin() {
 	depwinvolume = 10;
 
-	int boxw = 50; int boxh = 3;
+	int boxw = 50; int boxh = 5;
 	int boxx = tuiwidth / 2 - boxw / 2; int boxy = tuiheight / 2 - boxh / 2 + 1;
 
 	boxnew(boxy, boxx, boxh, boxw, tuiforev[4], "deposit");
 	boxbindnew("deposit", "deposit", depd);
 	boxbindnew("deposit", "cancel", depc);
 	
-	msgnew(boxy + 1, boxx + 2, 20, "volume: ");
+	msgnew(boxy + 2, boxx + 2, 20, "volume: ");
 	
-	listnew(boxy + 1, boxx + 2 + 20, boxh - 2, boxw - 4 - 20, 0);
+	listnew(boxy + 2, boxx + 2 + 20, boxh - 2, boxw - 4 - 20, 0);
 	listaddfield(boxw - 4 - 20, tuiforev[4], "volume", INFOINT);
 	listaddrecord((void*[]){&depwinvolume});
 	listbindleft(depwinlistleft);
@@ -134,13 +136,21 @@ static void depwin() {
 
 static void witwin() {
 	witwinvolume = 10;
-	
-	int boxw = 50;
-	int boxh = 3;
 
-	boxnew(tuiheight / 2 - boxh / 2 + 1, tuiwidth / 2 - boxw / 2, boxh, boxw, tuiforev[4], "withdraw");
+	int boxw = 50; int boxh = 5;
+	int boxx = tuiwidth / 2 - boxw / 2; int boxy = tuiheight / 2 - boxh / 2 + 1;
+
+	boxnew(boxy, boxx, boxh, boxw, tuiforev[4], "withdraw");
 	boxbindnew("withdraw", "withdraw", witw);
-	boxbindnew("withdraw", "cancel", witc);}
+	boxbindnew("withdraw", "cancel", witc);
+	
+	msgnew(boxy + 2, boxx + 2, 20, "volume: ");
+	
+	listnew(boxy + 2, boxx + 2 + 20, boxh - 2, boxw - 4 - 20, 0);
+	listaddfield(boxw - 4 - 20, tuiforev[4], "volume", INFOINT);
+	listaddrecord((void*[]){&witwinvolume});
+	listbindleft(witwinlistleft);
+	listbindright(witwinlistright);}
 
 static void maind() {
 	winshow("dep");}
@@ -161,15 +171,21 @@ static void depc() {
 	winshow("main");}
 
 static void depd() {
-	frac_t new = fracnew(depwinvolume, 1);
-	fracadd(&liquidvolume, &new);
+	frac_t add = fracnew(depwinvolume, 1);
+	fracadd(&liquidvolume, &add);
 	winshow("main");}
 
 static void witc() {
 	winshow("main");}
 
 static void witw() {
-	}
+	frac_t sub = fracnew(witwinvolume, 1);
+	frac_t set = fracnew(0, 1);
+	set = liquidvolume;
+	fracsub(&set, &sub);
+	set = fractod(&set) < 0 ? fracnew(0, 1) : set;
+	liquidvolume = set;
+	winshow("main");}
 
 static void depwinlistleft(int recordc, void** recordv) {
 	(void)recordc; (void)recordv;
@@ -179,6 +195,15 @@ static void depwinlistleft(int recordc, void** recordv) {
 static void depwinlistright(int recordc, void** recordv) {
 	(void)recordc; (void)recordv;
 	depwinvolume += 1;}
+
+static void witwinlistleft(int recordc, void** recordv) {
+	(void)recordc; (void)recordv;
+	witwinvolume -= 1;
+	witwinvolume = witwinvolume < 0 ? 0 : witwinvolume;}
+
+static void witwinlistright(int recordc, void** recordv) {
+	(void)recordc; (void)recordv;
+	witwinvolume += 1;}
 
 static int depcmd(int argc, char** argv) {
 	if (argc == 1) {
