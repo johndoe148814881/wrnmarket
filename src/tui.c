@@ -180,8 +180,7 @@ static void witc() {
 
 static void witw() {
 	frac_t sub = fracnew(witwinvolume, 1);
-	frac_t set = fracnew(0, 1);
-	set = liquidvolume;
+	frac_t set = liquidvolume;
 	fracsub(&set, &sub);
 	set = fractod(&set) < 0 ? fracnew(0, 1) : set;
 	liquidvolume = set;

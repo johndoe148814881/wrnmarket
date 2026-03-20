@@ -54,7 +54,7 @@ static int showwin(char* name) {
 				if (winv[i].onupdate)
 					winv[i].onupdate();
 				return 0;}
-			
+
 			boxfreeall();
 			bindfreeall();
 			infofreeall();
